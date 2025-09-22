@@ -10,7 +10,7 @@ export default function UniversalMathSolver() {
   useEffect(() => {
     (async () => {
       try {
-        const mod = await import("https://cdn.jsdelivr.net/npm/mathjs@11/+esm");
+        const mod = await import("https://cdn.jsdelivr.net/npm/mathjs@11/esm/");
         mathRef.current = mod;
         setLoadingMath(false);
       } catch (e) {
@@ -26,6 +26,7 @@ export default function UniversalMathSolver() {
       setResult("mathjs не загружен");
       return;
     }
+
     try {
       const math = mathRef.current;
       let res;
@@ -35,18 +36,22 @@ export default function UniversalMathSolver() {
         const expr = `${left} - (${right})`;
         const f = math.parse(expr).compile();
         let x = 0;
+
         for (let i = 0; i < 20; i++) {
           const scope = { x };
           const fx = f.evaluate(scope);
           const dfx = math.derivative(expr, "x").evaluate(scope);
+
           if (Math.abs(dfx) < 1e-12) break;
-          const x1 = x - fx / dfx;
-          if (Math.abs(x1 - x) < 1e-7) {
-            x = x1;
+
+          const nextX = x - fx / dfx;
+          if (Math.abs(nextX - x) < 1e-7) {
+            x = nextX;
             break;
           }
-          x = x1;
+          x = nextX;
         }
+
         res = `x ≈ ${x}`;
       } else {
         res = math.evaluate(input);
@@ -59,43 +64,39 @@ export default function UniversalMathSolver() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
-      <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 w-full max-w-xl">
-        <h1 className="text-3xl font-extrabold text-center text-gray-800 mb-6">
-          Universal Math Solver
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100 p-6">
+      <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-lg w-full">
+        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+          Universal Math Solver ✨
         </h1>
 
-        {loadingMath && <p className="text-center text-gray-600">Загрузка mathjs...</p>}
-        {error && <p className="text-center text-red-600">{error}</p>}
+        {loadingMath && (
+          <p className="text-gray-500 text-center">Загрузка mathjs...</p>
+        )}
+        {error && <p className="text-red-500 text-center">{error}</p>}
 
         {!loadingMath && !error && (
           <>
-            <textarea
-              className="w-full h-28 p-4 border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4 text-lg"
-              placeholder="Введите пример или уравнение (например: 2+3*sqrt(4) или x^2-5x+6=0)"
+            <input
+              type="text"
+              placeholder="Введите выражение (например: 2+2 или x^2=4)"
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4 focus:ring-2 focus:ring-purple-500 focus:outline-none"
             />
 
-            <div className="flex gap-4 mb-6">
-              <button
-                onClick={solve}
-                className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-all shadow-md"
-              >
-                Решить
-              </button>
-              <button
-                onClick={() => { setInput(""); setResult(""); }}
-                className="flex-1 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition-all"
-              >
-                Очистить
-              </button>
-            </div>
+            <button
+              onClick={solve}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg transition"
+            >
+              Решить
+            </button>
 
-            <div className="p-4 border rounded-xl bg-gray-50 shadow-inner">
-              <h3 className="font-semibold text-gray-700 mb-2">Результат:</h3>
-              <p className="text-lg break-words text-gray-900">{result || "Здесь появится ответ"}</p>
-            </div>
+            {result && (
+              <div className="mt-6 p-4 bg-gray-100 rounded-lg text-center text-lg font-medium text-gray-800">
+                {result}
+              </div>
+            )}
           </>
         )}
       </div>
